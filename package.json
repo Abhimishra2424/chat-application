@@ -13,6 +13,7 @@
   "license": "ISC",
   "dependencies": {
     "apollo-server": "^3.7.0",
+    "bcryptjs": "^2.4.3",
     "graphql": "^16.5.0",
     "mysql2": "^2.3.3",
     "sequelize": "^6.19.0"
