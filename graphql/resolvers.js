@@ -1,15 +1,84 @@
 const bcrypt = require("bcryptjs");
 const { User } = require("../models");
-const { UserInputError } = require("apollo-server");
+const { UserInputError, AuthenticationError } = require("apollo-server");
+const jwt = require("jsonwebtoken");
+const { JWT_SECRET } = require("../config/env.json");
+const { Op } = require("sequelize");
 
 module.exports = {
   Query: {
-    getUsers: async () => {
+    getUsers: async (_, __, context) => {
       try {
-        const users = await User.findAll();
+        let user;
+
+        if (context.req && context.req.headers.authorization) {
+          const token = context.req.headers.authorization.split("Bearer ")[1];
+          jwt.verify(token, JWT_SECRET, (err, decodedToken) => {
+            if (err) {
+              throw new AuthenticationError("Invalid token");
+            }
+            user = decodedToken;
+          });
+        }
+        const users = await User.findAll({
+          where: {
+            username: {
+              [Op.ne]: user.username,
+            },
+          },
+        });
         return users;
       } catch (error) {
         console.log(error);
+        throw error;
+      }
+    },
+
+    login: async (_, args) => {
+      const { username, password } = args;
+
+      let errors = {};
+
+      try {
+        if (username.trim() === "")
+          errors.username = "Username must not be empty";
+
+        if (password === "") errors.password = "password must not be empty";
+
+        if (Object.keys(errors).length > 0) {
+          throw new UserInputError("bad inputs", { errors });
+        }
+
+        const user = await User.findOne({ where: { username } });
+
+        if (!user) {
+          errors.username = "User not found";
+          throw new UserInputError("user not found", { errors });
+        }
+
+        const correctPassword = await bcrypt.compare(password, user.password);
+
+        if (!correctPassword) {
+          errors.password = "Incorrect password";
+          throw new AuthenticationError("password is Incorrect ", { errors });
+        }
+
+        const token = jwt.sign(
+          {
+            username,
+          },
+          JWT_SECRET,
+          { expiresIn: 60 * 60 }
+        );
+
+        return {
+          ...user.toJSON(),
+          createdAt: user.createdAt.toISOString(),
+          token,
+        };
+      } catch (error) {
+        console.log(error);
+        throw error;
       }
     },
   },

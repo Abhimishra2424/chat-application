@@ -9,6 +9,7 @@ const server = new ApolloServer({
   typeDefs,
   resolvers,
   csrfPrevention: true,
+  context: (ctx) => ctx,
 });
 
 // The `listen` method launches a web server.
