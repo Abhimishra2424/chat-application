@@ -6,7 +6,7 @@ $paragraph-margin-bottom: 0;
 
 $gray-600: rgb(245, 245, 245);
 
-@import '~bootstrap/scss/bootstrap';
+@import "~bootstrap/scss/bootstrap";
 
 body {
   min-height: 100vh;
@@ -16,4 +16,8 @@ body {
     rgba(253, 29, 29, 0.9) 50%,
     rgba(252, 176, 69, 0.9) 100%
   );
+}
+
+.user-div:hover {
+  background: #fff;
 }
