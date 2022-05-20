@@ -1,130 +1,139 @@
-const bcrypt = require("bcryptjs");
-const { User } = require("../../models");
-const { UserInputError, AuthenticationError } = require("apollo-server");
-const jwt = require("jsonwebtoken");
-const { JWT_SECRET } = require("../../config/env.json");
-const { Op } = require("sequelize");
+const bcrypt = require('bcryptjs')
+const { UserInputError, AuthenticationError } = require('apollo-server')
+const jwt = require('jsonwebtoken')
+const { Op } = require('sequelize')
+
+const { Message, User } = require('../../models')
+const { JWT_SECRET } = require('../../config/env.json')
 
 module.exports = {
   Query: {
     getUsers: async (_, __, { user }) => {
       try {
-        if (!user) {
-          throw new AuthenticationError("Not authenticated");
-        }
+        if (!user) throw new AuthenticationError('Unauthenticated')
 
-        const users = await User.findAll({
+        let users = await User.findAll({
+          attributes: ['username', 'imageurl', 'createdAt'],
+          where: { username: { [Op.ne]: user.username } },
+        })
+
+        const allUserMessages = await Message.findAll({
           where: {
-            username: {
-              [Op.ne]: user.username,
-            },
+            [Op.or]: [{ from: user.username }, { to: user.username }],
           },
-        });
-        return users;
-      } catch (error) {
-        console.log(error);
-        throw error;
+          order: [['createdAt', 'DESC']],
+        })
+
+        users = users.map((otherUser) => {
+          const latestMessage = allUserMessages.find(
+            (m) => m.from === otherUser.username || m.to === otherUser.username
+          )
+          otherUser.latestMessage = latestMessage
+          return otherUser
+        })
+
+        return users
+      } catch (err) {
+        console.log(err)
+        throw err
       }
     },
-
     login: async (_, args) => {
-      const { username, password } = args;
-
-      let errors = {};
+      const { username, password } = args
+      let errors = {}
 
       try {
-        if (username.trim() === "")
-          errors.username = "Username must not be empty";
-
-        if (password === "") errors.password = "password must not be empty";
+        if (username.trim() === '')
+          errors.username = 'username must not be empty'
+        if (password === '') errors.password = 'password must not be empty'
 
         if (Object.keys(errors).length > 0) {
-          throw new UserInputError("bad inputs", { errors });
+          throw new UserInputError('bad input', { errors })
         }
 
-        const user = await User.findOne({ where: { username } });
+        const user = await User.findOne({
+          where: { username },
+        })
 
         if (!user) {
-          errors.username = "User not found";
-          throw new UserInputError("user not found", { errors });
+          errors.username = 'user not found'
+          throw new UserInputError('user not found', { errors })
         }
 
-        const correctPassword = await bcrypt.compare(password, user.password);
+        const correctPassword = await bcrypt.compare(password, user.password)
 
         if (!correctPassword) {
-          errors.password = "Incorrect password";
-          throw new UserInputError("password is Incorrect ", { errors });
+          errors.password = 'password is incorrect'
+          throw new UserInputError('password is incorrect', { errors })
         }
 
-        const token = jwt.sign(
-          {
-            username,
-          },
-          JWT_SECRET,
-          { expiresIn: 60 * 60 }
-        );
+        const token = jwt.sign({ username }, JWT_SECRET, {
+          expiresIn: 60 * 60,
+        })
 
         return {
           ...user.toJSON(),
           createdAt: user.createdAt.toISOString(),
           token,
-        };
-      } catch (error) {
-        console.log(error);
-        throw error;
+        }
+      } catch (err) {
+        console.log(err)
+        throw err
       }
     },
   },
   Mutation: {
     register: async (_, args) => {
-      let { username, email, password, confirmPassword } = args;
-      console.log(args);
-      let errors = {};
+      let { username, email, password, confirmPassword } = args
+      let errors = {}
+
       try {
-        if (email.trim() === "") errors.email = "email must not be empty";
-        if (username.trim() === "")
-          errors.username = "username must not be empty";
-        if (password.trim() === "")
-          errors.password = "password must not be empty";
-        if (confirmPassword.trim() === "")
-          errors.confirmPassword = "confirmPassword must not be empty";
+        // Validate input data
+        if (email.trim() === '') errors.email = 'email must not be empty'
+        if (username.trim() === '')
+          errors.username = 'username must not be empty'
+        if (password.trim() === '')
+          errors.password = 'password must not be empty'
+        if (confirmPassword.trim() === '')
+          errors.confirmPassword = 'repeat password must not be empty'
 
         if (password !== confirmPassword)
-          errors.confirmPassword = "password and confirmPassword must match";
+          errors.confirmPassword = 'passwords must match'
 
-        // const userByusername = await User.findOne({ where: { username } });
-        // const userByEmail = await User.findOne({ where: { email } });
+        // // Check if username / email exists
+        // const userByUsername = await User.findOne({ where: { username } })
+        // const userByEmail = await User.findOne({ where: { email } })
 
-        // if (userByusername) errors.username = "username already exists";
-        // if (userByEmail) errors.email = "email already exists";
+        // if (userByUsername) errors.username = 'Username is taken'
+        // if (userByEmail) errors.email = 'Email is taken'
 
-        console.log("errors", errors);
         if (Object.keys(errors).length > 0) {
-          throw errors;
+          throw errors
         }
 
-        // hash password
-        password = await bcrypt.hash(password, 12);
+        // Hash password
+        password = await bcrypt.hash(password, 6)
 
-        // create user
+        // Create user
         const user = await User.create({
           username,
           email,
           password,
-        });
-        return user;
-      } catch (error) {
-        console.log(error);
-        if (error.name === "SequelizeUniqueConstraintError") {
-          error.errors.forEach(
-            (e) => (errors[e.path] = `${e.path} already taken`)
-          );
-        } else if (error.name === "SequelizeValidationError") {
-          error.errors.forEach((e) => (errors[e.path] = e.message));
-        }
+        })
 
-        throw new UserInputError("Bad Input", { errors });
+        // Return user
+        return user
+      } catch (err) {
+        console.log(err)
+        if (err.name === 'SequelizeUniqueConstraintError') {
+          err.errors.forEach(
+            (e) => (errors[e.path] = `${e.path} is already taken`)
+          )
+        } else if (err.name === 'SequelizeValidationError') {
+          err.errors.forEach((e) => (errors[e.path] = e.message))
+        }
+        throw new UserInputError('Bad input', { errors })
       }
     },
   },
-};
+}
