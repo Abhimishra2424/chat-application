@@ -6,7 +6,7 @@ $paragraph-margin-bottom: 0;
 
 $gray-600: rgb(245, 245, 245);
 
-@import '~bootstrap/scss/bootstrap';
+@import "~bootstrap/scss/bootstrap";
 
 body {
   min-height: 100vh;
@@ -38,4 +38,14 @@ body {
   height: 50px;
   object-fit: cover;
   border-radius: 50%;
+}
+
+.message-input::placeholder {
+  color: black;
+}
+
+.info-text {
+  color: #fff;
+  text-align: center;
+  margin-bottom: 0.5rem;
 }
