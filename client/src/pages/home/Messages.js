@@ -4,7 +4,7 @@ import { Col, Form } from 'react-bootstrap'
 
 import { useMessageDispatch, useMessageState } from '../../context/messages'
 
-import MessageSingle from './MessageSingle'
+import Message from './Message'
 
 const SEND_MESSAGE = gql`
   mutation sendMessage($to: String!, $content: String!) {
@@ -88,7 +88,7 @@ export default function Messages() {
   } else if (messages.length > 0) {
     selectedChatMarkup = messages.map((message, index) => (
       <Fragment key={message.uuid}>
-        <MessageSingle message={message} />
+        <Message message={message} />
         {index === messages.length - 1 && (
           <div className="invisible">
             <hr className="m-0" />

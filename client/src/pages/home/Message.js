@@ -16,7 +16,7 @@ const REACT_TO_MESSAGE = gql`
   }
 `
 
-export default function MessageSingle({ message }) {
+export default function Message({ message }) {
   const { user } = useAuthState()
   const sent = message.from === user.username
   const received = !sent
@@ -32,36 +32,36 @@ export default function MessageSingle({ message }) {
     reactToMessage({ variables: { uuid: message.uuid, content: reaction } })
   }
 
-  const reactButton = (
-    <OverlayTrigger
-      trigger="click"
-      placement="top"
-      show={showPopover}
-      onToggle={setShowPopover}
-      transition={false}
-      rootClose
-      overlay={
-        <Popover className="rounded-pill">
-          <Popover.Content className="d-flex px-0 py-1 align-items-center react-button-popover">
-            {reactions.map((reaction) => (
-              <Button
-                variant="link"
-                className="react-icon-button"
-                key={reaction}
-                onClick={() => react(reaction)}
-              >
-                {reaction}
-              </Button>
-            ))}
-          </Popover.Content>
-        </Popover>
-      }
-    >
-      <Button variant="link" className="px-2">
-        <i className="far fa-smile"></i>
-      </Button>
-    </OverlayTrigger>
-  )
+  // const reactButton = (
+  //   <OverlayTrigger
+  //     trigger="click"
+  //     placement="top"
+  //     show={showPopover}
+  //     onToggle={setShowPopover}
+  //     transition={false}
+  //     rootClose
+  //     overlay={
+  //       <Popover className="rounded-pill">
+  //         <Popover.Content className="d-flex px-0 py-1 align-items-center react-button-popover">
+  //           {reactions.map((reaction) => (
+  //             <Button
+  //               variant="link"
+  //               className="react-icon-button"
+  //               key={reaction}
+  //               onClick={() => react(reaction)}
+  //             >
+  //               {reaction}
+  //             </Button>
+  //           ))}
+  //         </Popover.Content>
+  //       </Popover>
+  //     }
+  //   >
+  //     <Button variant="link" className="px-2">
+  //       <i className="far fa-smile"></i>
+  //     </Button>
+  //   </OverlayTrigger>
+  // )
 
   return (
     <div
@@ -70,7 +70,7 @@ export default function MessageSingle({ message }) {
         'mr-auto': received,
       })}
     >
-      {sent && reactButton}
+      {/* {sent && reactButton} */}
       <OverlayTrigger
         placement={sent ? 'right' : 'left'}
         overlay={
@@ -96,7 +96,7 @@ export default function MessageSingle({ message }) {
           </p>
         </div>
       </OverlayTrigger>
-      {received && reactButton}
+      {/* {received && reactButton} */}
     </div>
   )
 }
