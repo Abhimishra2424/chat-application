@@ -4,7 +4,7 @@ import { Col, Form } from 'react-bootstrap'
 
 import { useMessageDispatch, useMessageState } from '../../context/messages'
 
-import Message from './Message'
+import MessageSingle from './MessageSingle'
 
 const SEND_MESSAGE = gql`
   mutation sendMessage($to: String!, $content: String!) {
@@ -26,6 +26,10 @@ const GET_MESSAGES = gql`
       to
       content
       createdAt
+      reactions {
+        uuid
+        content
+      }
     }
   }
 `
@@ -84,7 +88,7 @@ export default function Messages() {
   } else if (messages.length > 0) {
     selectedChatMarkup = messages.map((message, index) => (
       <Fragment key={message.uuid}>
-        <Message message={message} />
+        <MessageSingle message={message} />
         {index === messages.length - 1 && (
           <div className="invisible">
             <hr className="m-0" />
@@ -101,13 +105,13 @@ export default function Messages() {
   }
 
   return (
-    <Col xs={10} md={8}>
-      <div className="messages-box d-flex flex-column-reverse">
+    <Col xs={10} md={8} className="p-0">
+      <div className="messages-box d-flex flex-column-reverse p-3">
         {selectedChatMarkup}
       </div>
-      <div>
+      <div className="px-3 py-2">
         <Form onSubmit={submitMessage}>
-          <Form.Group className="d-flex align-items-center">
+          <Form.Group className="d-flex align-items-center m-0">
             <Form.Control
               type="text"
               className="message-input rounded-pill p-4 bg-secondary border-0"

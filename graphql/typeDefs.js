@@ -1,12 +1,12 @@
-const { gql } = require("apollo-server");
+const { gql } = require('apollo-server')
 
 module.exports = gql`
   type User {
     username: String!
     email: String
-    imageurl: String
     createdAt: String!
     token: String
+    imageurl: String
     latestMessage: Message
   }
   type Message {
@@ -15,13 +15,14 @@ module.exports = gql`
     from: String!
     to: String!
     createdAt: String!
+    reactions: [Reaction]
   }
   type Reaction {
     uuid: String!
     content: String!
     createdAt: String!
-    Message: Message!
-    User: User!
+    message: Message!
+    user: User!
   }
   type Query {
     getUsers: [User]!
@@ -38,8 +39,8 @@ module.exports = gql`
     sendMessage(to: String!, content: String!): Message!
     reactToMessage(uuid: String!, content: String!): Reaction!
   }
-
   type Subscription {
     newMessage: Message!
+    newReaction: Reaction!
   }
-`;
+`
